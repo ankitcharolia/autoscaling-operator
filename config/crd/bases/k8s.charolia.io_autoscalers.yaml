@@ -34,13 +34,66 @@ spec:
           spec:
             description: AutoScalerSpec defines the desired state of AutoScaler
             properties:
-              foo:
-                description: Foo is an example field of AutoScaler. Edit autoscaler_types.go
-                  to remove/update
-                type: string
+              minReplicaCount:
+                format: int32
+                type: integer
+              scaleTargetRef:
+                description: ScaleTargetRef defines the target to scale
+                properties:
+                  name:
+                    type: string
+                  type:
+                    type: string
+                required:
+                - name
+                - type
+                type: object
+              triggers:
+                items:
+                  description: Trigger defines the trigger for scaling
+                  properties:
+                    metadata:
+                      description: TriggerMetadata defines metadata for a scaling
+                        trigger
+                      properties:
+                        desiredReplicas:
+                          format: int32
+                          type: integer
+                        end:
+                          type: string
+                        start:
+                          type: string
+                        timezone:
+                          type: string
+                      required:
+                      - desiredReplicas
+                      - end
+                      - start
+                      - timezone
+                      type: object
+                    type:
+                      type: string
+                  required:
+                  - metadata
+                  - type
+                  type: object
+                type: array
+            required:
+            - minReplicaCount
+            - scaleTargetRef
+            - triggers
             type: object
           status:
             description: AutoScalerStatus defines the observed state of AutoScaler
+            properties:
+              currentReplicas:
+                format: int32
+                type: integer
+              lastScaleTime:
+                format: date-time
+                type: string
+            required:
+            - currentReplicas
             type: object
         type: object
     served: true

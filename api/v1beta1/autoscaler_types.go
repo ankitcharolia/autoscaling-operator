@@ -25,17 +25,35 @@ import (
 
 // AutoScalerSpec defines the desired state of AutoScaler
 type AutoScalerSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	ScaleTargetRef  ScaleTargetRef `json:"scaleTargetRef"`
+	Triggers        []Trigger      `json:"triggers"`
+	MinReplicaCount int32          `json:"minReplicaCount"`
+}
 
-	// Foo is an example field of AutoScaler. Edit autoscaler_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+// ScaleTargetRef defines the target to scale
+type ScaleTargetRef struct {
+	Name string `json:"name"`
+	Type string `json:"type"` // deployment, statefulset
+}
+
+// Trigger defines the trigger for scaling
+type Trigger struct {
+	Type     string          `json:"type"` // cron
+	Metadata TriggerMetadata `json:"metadata"`
+}
+
+// TriggerMetadata defines metadata for a scaling trigger
+type TriggerMetadata struct {
+	Timezone        string `json:"timezone"`
+	Start           string `json:"start"`
+	End             string `json:"end"`
+	DesiredReplicas int32  `json:"desiredReplicas"`
 }
 
 // AutoScalerStatus defines the observed state of AutoScaler
 type AutoScalerStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	CurrentReplicas int32       `json:"currentReplicas"`
+	LastScaleTime   metav1.Time `json:"lastScaleTime,omitempty"`
 }
 
 //+kubebuilder:object:root=true

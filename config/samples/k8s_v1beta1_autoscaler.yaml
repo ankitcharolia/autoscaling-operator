@@ -9,4 +9,14 @@ metadata:
     app.kubernetes.io/created-by: autoscaling-operator
   name: autoscaler-sample
 spec:
-  # TODO(user): Add fields here
+  minReplicaCount: 0
+  scaleTargetRef:
+    name: nginx
+    type: deployment
+  triggers:
+  - type: cron
+    metadata:
+      timezone: Europe/Berlin
+      start: "*/2 * * * *" # every 2 minutes
+      end: "*/5 * * * *" # every 5 minutes
+      desiredReplicas: 5
