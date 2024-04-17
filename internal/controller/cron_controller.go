@@ -42,9 +42,22 @@ type AutoScalerReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=k8s.charolia.io,resources=autoscalers,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=k8s.charolia.io,resources=autoscalers/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=k8s.charolia.io,resources=autoscalers/finalizers,verbs=update
+// +kubebuilder:rbac:groups=k8s.charolia.io,resources=autoscalers,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=k8s.charolia.io,resources=autoscalers/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=k8s.charolia.io,resources=autoscalers/finalizers,verbs=update
+// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create
+// +kubebuilder:rbac:groups=batch,resources=cronjobs,verbs=get;list;watch;create
+// +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,verbs=get;list;watch;create;update;delete;bind;escalate
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=get;list;watch;create;update;delete;bind;escalate
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=apps,resources=deployments/scale,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=apps,resources=statefulsets/scale,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=apps,resources=replicaset,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=apps,resources=replicaset/scale,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=apps,resources=replicationcontroller,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=apps,resources=replicationcontroller/scale,verbs=get;list;watch;update;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -100,16 +113,16 @@ func (r *AutoScalerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	err = r.Get(ctx, types.NamespacedName{Name: "autoscaler-" + name, Namespace: req.Namespace}, cr)
 	if err != nil && errors.IsNotFound(err) {
 		// role does not exist, create it
-		cr := &rbacv1.Role{
+		cr := &rbacv1.ClusterRole{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "autoscaler-" + name,
+				Name:      "autoscaler-" + name,
+				Namespace: req.Namespace,
 			},
 			Rules: []rbacv1.PolicyRule{
 				{
-					APIGroups:     []string{"apps"},
-					Resources:     []string{resourceType, resourceType + "/scale"},
-					ResourceNames: []string{name},
-					Verbs:         []string{"get", "list", "watch", "update", "patch"},
+					APIGroups: []string{"apps"},
+					Resources: []string{resourceType, resourceType + "/scale"},
+					Verbs:     []string{"get", "list", "watch", "update", "patch"},
 				},
 			},
 		}
@@ -122,14 +135,15 @@ func (r *AutoScalerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	// Check if the role binding exists
+	// Check if the clusterrole binding exists
 	crb := &rbacv1.RoleBinding{}
 	err = r.Get(ctx, types.NamespacedName{Name: "autoscaler-" + name, Namespace: req.Namespace}, crb)
 	if err != nil && errors.IsNotFound(err) {
 		// role binding does not exist, create it
-		crb := &rbacv1.RoleBinding{
+		crb := &rbacv1.ClusterRoleBinding{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "autoscaler-" + name,
+				Name:      "autoscaler-" + name,
+				Namespace: req.Namespace,
 			},
 			Subjects: []rbacv1.Subject{
 				{
@@ -139,9 +153,8 @@ func (r *AutoScalerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				},
 			},
 			RoleRef: rbacv1.RoleRef{
-				Kind:     "Role",
-				Name:     "autoscaler-" + name,
-				APIGroup: "rbac.authorization.k8s.io",
+				Kind: "Role",
+				Name: "autoscaler-" + name,
 			},
 		}
 		if err := r.Create(ctx, crb); err != nil {
@@ -153,7 +166,7 @@ func (r *AutoScalerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	kubectlImage := "bitnami/kubectl:1.29.3"
+	kubectlImage := "ankitcharolia/kubectl:1.29.3"
 
 	for _, trigger := range as.Spec.Triggers {
 		DesiredReplicas := trigger.Metadata.DesiredReplicas
@@ -190,7 +203,13 @@ func (r *AutoScalerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 											Command: []string{
 												"/bin/sh",
 												"-c",
-												"kubectl scale" + resourceType + " " + name + " --replicas=" + strconv.Itoa(int(DesiredReplicas)),
+											},
+											Args: []string{
+												`kubectl scale ` + resourceType + ` ` + name + ` --replicas=` + strconv.Itoa(int(DesiredReplicas)),
+											},
+											SecurityContext: &corev1.SecurityContext{
+												RunAsUser:  pointer.Int64(0),
+												RunAsGroup: pointer.Int64(0),
 											},
 										},
 									},
@@ -239,7 +258,13 @@ func (r *AutoScalerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 											Command: []string{
 												"/bin/sh",
 												"-c",
-												"kubectl scale" + resourceType + " " + name + " --replicas=" + strconv.Itoa(int(minReplicaCount)),
+											},
+											Args: []string{
+												`kubectl scale ` + resourceType + ` ` + name + ` --replicas=` + strconv.Itoa(int(minReplicaCount)),
+											},
+											SecurityContext: &corev1.SecurityContext{
+												RunAsUser:  pointer.Int64(0),
+												RunAsGroup: pointer.Int64(0),
 											},
 										},
 									},
@@ -300,6 +325,10 @@ func (r *AutoScalerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *AutoScalerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&k8sv1beta1.AutoScaler{}).
-		Owns(&batchv1.CronJob{}). // Watch CronJob resources
+		// Owns(&batchv1.CronJob{}).       // Watch CronJob resources
+		// Owns(&batchv1.Job{}).           // Watch Job resources
+		// Owns(&corev1.ServiceAccount{}). // Watch ServiceAccount resources
+		// Owns(&rbacv1.Role{}).           // Watch Role resources
+		// Owns(&rbacv1.RoleBinding{}).    // Watch RoleBinding resources
 		Complete(r)
 }

@@ -1,0 +1,15 @@
+# Use a lightweight base image
+FROM alpine:3.19.1
+
+# Install necessary dependencies
+RUN apk --no-cache add curl bash
+
+# Download and install kubectl version 1.29.3
+RUN curl -LO "https://dl.k8s.io/release/v1.29.3/bin/linux/amd64/kubectl" && \
+    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# Verify kubectl installation
+RUN kubectl version --client
+
+# Set the default command to kubectl
+CMD ["kubectl"]

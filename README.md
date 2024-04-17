@@ -1,61 +1,32 @@
 # autoscaling-operator
-// TODO(user): Add simple overview of use/purpose
+<p align="center">
+<img src="docs/autoscaling-operator.png" alt="autoscaling-operator" width="20%"/>
+</p>
+
+<p align="center">
+<a href="https://github.com/ankitcharolia/autoscaling-operator/actions/workflows/ci.yml"><img src="https://github.com/ankitcharolia/autoscaling-operator/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+<a href="https://github.com/ankitcharolia/autoscaling-operator/actions/workflows/release.yml"><img src="https://github.com/ankitcharolia/autoscaling-operator/actions/workflows/release.yml/badge.svg" alt="Release"></a>
+<a href="https://github.com/ankitcharolia/autoscaling-operator/actions/workflows/helm.yml"><img src="https://github.com/ankitcharolia/autoscaling-operator/actions/workflows/helm.yml/badge.svg" alt="Helm"></a>
+<a href="https://github.com/ankitcharolia/autoscaling-operator/actions/workflows/manifests.yml"><img src="https://github.com/ankitcharolia/autoscaling-operator/actions/workflows/manifests.yml/badge.svg" alt="Manifests"></a>
+<a href="https://github.com/ankitcharolia/autoscaling-operator/actions/workflows/olm-helm.yml"><img src="https://github.com/ankitcharolia/autoscaling-operator/actions/workflows/olm-helm.yml/badge.svg" alt="OLM Helm"></a>
+</p>
+
+<p align="center">
+<a href="https://goreportcard.com/report/github.com/autoscaling-operator/autoscaling-operator"><img src="https://goreportcard.com/badge/github.com/autoscaling-operator/autoscaling-operator" alt="Go Report Card"></a>
+<a href="https://pkg.go.dev/github.com/autoscaling-operator/autoscaling-operator"><img src="https://pkg.go.dev/badge/github.com/autoscaling-operator/autoscaling-operator.svg" alt="Go Reference"></a>
+<a href="https://artifacthub.io/packages/helm/autoscaling-operator/autoscaling-operator"><img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/autoscaling-operator" alt="Artifact Hub"></a>
+<a href="https://operatorhub.io/operator/autoscaling-operator"><img src="https://img.shields.io/badge/Operator%20Hub-autoscaling--operator-red" alt="Operator Hub"></a>
+</p>
 
 ## Description
 // TODO(user): An in-depth paragraph about your project and overview of use
 
-### To Deploy on the cluster
-**Build and push your image to the location specified by `IMG`:**
-
-```sh
-make docker-build docker-push IMG=<some-registry>/autoscaling-operator:tag
-```
-
-**NOTE:** This image ought to be published in the personal registry you specified. 
-And it is required to have access to pull the image from the working environment. 
-Make sure you have the proper permission to the registry if the above commands don’t work.
-
-**Install the CRDs into the cluster:**
-
-```sh
-make install
-```
-
-**Deploy the Manager to the cluster with the image specified by `IMG`:**
-
-```sh
-make deploy IMG=<some-registry>/autoscaling-operator:tag
-```
-
-> **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin 
-privileges or be logged in as admin.
 
 **Create instances of your solution**
 You can apply the samples (examples) from the config/sample:
 
 ```sh
 kubectl apply -k config/samples/
-```
-
->**NOTE**: Ensure that the samples has default values to test it out.
-
-### To Uninstall
-**Delete the instances (CRs) from the cluster:**
-
-```sh
-kubectl delete -k config/samples/
-```
-
-**Delete the APIs(CRDs) from the cluster:**
-
-```sh
-make uninstall
-```
-
-**UnDeploy the controller from the cluster:**
-
-```sh
-make undeploy
 ```
 
 ## Contributing
